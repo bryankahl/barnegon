@@ -34,27 +34,33 @@ Cloudflare Turnstile enforces a limit of 10 allowed domains per widget sitekey; 
 *   **Dynamic Appending:** If there is an open slot (1-9 domains), the backend uses Cloudflare's Management API to add the new domain to the existing widget and increases the database counter.
 *   **Autonomous Minting:** If all existing widgets are full (10/10), it automatically executes a `POST` request to Cloudflare to create an entirely new widget, retrieves the new Sitekey/Secret pair, stores it in the database, and begins filling the new widget.
 
-### 3. Zero-Trust Architecture & Lead Verification
+### 3. The Defense (Zero-Trust & Lead Verification)
 
-Public-facing lead forms and AI chat interfaces are prime targets for botnets and XSS injections. The architecture assumes all inbound traffic is hostile until cryptographically proven otherwise.
+
+The custom chatbot is now embedded live on the client's website after injecting their script. Every time a visitor tries to submit a custom lead form or interact with the AI, the zero-trust security model activates. The system runs invisible mathematics in the background to verify the user is human before any data touches the database.
+Public-facing lead forms and AI chat interfaces are prime targets for botnets and XSS injections. This architecture assumes all inbound traffic is malicious until cryptographically proven otherwise.
+
 
 ![Zero Trust Security](./assets/TurnstileTokenAndSiteverify.png)
 ![Dynamic UI Rendering](./assets/DynamicLeadAndUIRendering.png)
 
-*   **The Frontend Bouncer:** Cloudflare Turnstile executes a silent Proof-of-Work challenge in the browser. If passed, it issues a single-use cryptographic token.
-*   **Backend Verification:** Before hitting the core business logic, database, or OpenAI API, an Express middleware intercepts the request and POSTs the token to Cloudflare's `/siteverify` endpoint. Reused, missing, or forged tokens result in an immediate `403 Forbidden`.
-*   **Recursive WAF Sanitization:** Once verified as human, the payload is recursively scrubbed by a custom Web Application Firewall (WAF) script to neutralize SQLi and XSS vectors before executing CRM writes.
+*   **The Frontend Bouncer:** Cloudflare Turnstile executes a silent challenge in the browser. If passed, it issues a single-use cryptographic token.
+*   **Backend Verification:** Before hitting the core business logic, database, or OpenAI API, an Express middleware intercepts the request and POSTs this token to Cloudflare's `/siteverify` endpoint. Reused, missing, or forged tokens result in an immediate `403 Forbidden`.
+*   **Recursive WAF Sanitization:** Once verified as human, the payload is scrubbed by a custom Web Application Firewall (WAF) script to neutralize malicious scripts before executing CRM writes.
 
-### 4. AI Cognition Pipeline & Context Compaction
+### 4. The AI Pipeline
 
-LLM-based chat interfaces inherently risk exponential token bloat and prompt-injection attacks. This architecture bounds memory consumption while ensuring UI safety and fault tolerance.
+
+With the visitor verified and the prompt sanitized, the request is sent to the OpenAI API. The AI processes the business context and responds to the user.
+However, chat interfaces inherently risk exponential token bloat and prompt-injection attacks. This architecture demonstrates memory consumption while ensuring UI safety and fault tolerance during those conversations.
+
 
 ![AI Cognition and Sanitization](./assets/SanitizationAndAICognition.png)
 ![Chat Zero Trust](./assets/ChatZeroTrustIntercept.png)
 
-*   **Token Bounding (Memory Compaction):** To prevent unbounded context windows from spiking API costs, the system monitors message count. Once a thread exceeds 6 messages, a background process distills the older history into a rolling 150-token active summary, keeping memory linear.
-*   **Fault-Tolerant Fetching:** Third-party LLM APIs can experience severe latency. The outbound fetch to OpenAI is wrapped in a strict 20-second `AbortController`. If the API hangs, the socket is severed with a `504 Gateway Timeout`, preventing suspended requests from starving the Node.js event loop.
-*   **Safe UI Injection & UX:** To neutralize prompt injection attacks attempting to force client-side XSS, the frontend strictly binds the AI response using `.textContent` rather than `.innerHTML`. An artificial 900ms delay is injected before rendering to mimic human response latency.
+*   **Token Bounding (Memory Compaction):** To prevent limitless context windows from causing huge API costs, the system monitors message count. Once a thread exceeds 6 messages, a background process creates the older history into a 150-token active summary, keeping memory linear.
+*   **Fault-Tolerant Fetching:** LLM APIs can have extreme latency. The outbound fetch to OpenAI is wrapped in a 20-second `AbortController`. If the API hangs, the socket is cut with a `504 Gateway Timeout`, preventing suspended requests from wasting the Node.js event loop.
+*   **Safe UI Injection & UX:** To minimize prompt injection attacks trying to force client-side XSS, the frontend binds the AI response using `.textContent` rather than `.innerHTML`. A 900ms delay is added before rendering to mimic human response delay.
 
 ---
 
