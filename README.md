@@ -26,29 +26,29 @@ When an existing user wants to view their subscription or cancel, they click "Ma
 ### 2. The First-Time Setup (Dynamic Domain Provisioning)
 
 
-Once the account is activated, the business owner opens a first-time setup screen. They input their core business details, most importantly, their website's domain name. This domain is whitelisted so the Barnegon chat widget can operate on their site. The domain is saved in Firestore and pushed into Cloudflare's Turnstile system for botnet defense.
-Cloudflare Turnstile enforces a limit of 10 allowed domains per widget sitekey; therefore, this scalable SaaS architecture needs a dynamic provisioning algorithm so no manual intervention is needed.
+Once the account is activated, the business owner opens a first-time setup screen. They input their core business details, most importantly, their website's domain name. This domain must be whitelisted so the custom chat widget can operate on their site. The goal is to deploy Cloudflare Turnstile to protect our entire SaaS platform from advanced botnets.
+The constraint is that Cloudflare restricts Turnstile widgets to a maximum of 10 custom domains. The bottleneck is that the 11th client registration will fail without manual DevOps intervention. To solve this and support unlimited client websites, the architecture utilizes an automated layer to scale domains infinitely.
 
 
 ![Domain Provisioning](./assets/DomainProvisioning.png)
 
-*   **Capacity Polling:** When a new client adds a domain via the dashboard, the backend checks the database for a widget with a `domainCount` under 10.
-*   **Dynamic Appending:** If there is an open slot (1-9 domains), the backend uses Cloudflare's Management API to add the new domain to the existing widget and increases the database counter.
-*   **Autonomous Minting:** If all existing widgets are full (10/10), it automatically executes a `POST` request to Cloudflare to create an entirely new widget, retrieves the new Sitekey/Secret pair, stores it in the database, and begins filling the new widget.
+*   **The Router (`turnstile.js`):** Sanitizes inputs by stripping `https://` and `www.` to prevent Cloudflare API crashes.
+*   **Zombie Interceptor (`turnstile.js`):** Detects when a client changes domains and flags the old domain for deletion.
+*   **The Orchestrator (`turnstileService.js`):** Executes O(1) database queries to find open ⁠< 10⁠ slots.
+*   **Dynamic Minting (`turnstileService.js`):** Automatically fires POST requests to Cloudflare to mint new widgets when slots are full.
 
 ### 3. The Defense (Zero-Trust & Lead Verification)
 
-
-The custom chatbot is now embedded live on the client's website after injecting their script. Every time a visitor tries to submit a custom lead form or interact with the AI, the zero-trust security model activates. The system runs invisible mathematics in the background to verify the user is human before any data touches the database.
-Public-facing lead forms and AI chat interfaces are prime targets for botnets and XSS injections. This architecture assumes all inbound traffic is malicious until cryptographically proven otherwise.
-
+The custom chatbot is now embedded live on the client's website. Traditional firewalls rely on blocking static IP addresses, but "IP Blocking" is completely useless against modern botnets. Modern exploits use "Residential Proxy Networks" where the IP address changes every millisecond. Therefore, we use Turnstile on the frontend to build a "Zero Trust" pipeline.
 
 ![Zero Trust Security](./assets/TurnstileTokenAndSiteverify.png)
 ![Dynamic UI Rendering](./assets/DynamicLeadAndUIRendering.png)
 
-*   **The Frontend Bouncer:** Cloudflare Turnstile executes a silent challenge in the browser. If passed, it issues a single-use cryptographic token.
-*   **Backend Verification:** Before hitting the core business logic, database, or OpenAI API, an Express middleware intercepts the request and POSTs this token to Cloudflare's `/siteverify` endpoint. Reused, missing, or forged tokens result in an immediate `403 Forbidden`.
-*   **Recursive WAF Sanitization:** Once verified as human, the payload is scrubbed by a custom Web Application Firewall (WAF) script to neutralize malicious scripts before executing CRM writes.
+*   **Frontend Security:** Turnstile runs an invisible background check and searches for a cryptographic token from the user's OS. It forces the computer to solve a math problem; a human solves this instantly, but a spammer with 10,000 IPs will crash their own server attempting the math.
+*   **The Coat Check:** Turnstile issues a one-time cryptographic token after completing the human check.
+*   **Middleware Shield (`verifyTurnstile.js`):** We never trust the frontend, because hackers can forge "passed" requests via API. This middleware acts as a universal shield for all secure routes. The backend authenticates the token directly with Cloudflare via ⁠`siteverify⁠` validation.
+*   **Web Application Firewall (WAF):** Turnstile stops bots, but it does not stop a human from manually inputting a malicious script into the form. Turnstile verifies the messenger, but it does not verify the message. To prevent Stored XSS and Database Poisoning for no cost, a Custom Node.js WAF sanitizes the payload.To protect the Node.js CPU from resource exhaustion as traffic scales, payload inspection will eventually be offloaded to Cloudflare's Enterprise WAF (Payload Inspection).
+
 
 ### 4. The AI Pipeline
 
