@@ -4,9 +4,12 @@ A production ready, SaaS platform built for service businesses. This repository 
 
 ## System Architecture
 
-### 1. Payment Activation & Webhook Idempotency
+### 1. The Onboarding (Auth, Billing & Webhook Security)
 
-Handling third-party webhooks safely requires guarding against both spoofed requests and network retries (replay attacks). This sequence guarantees that a user is only activated after a cryptographically verified, single-process payment.
+
+The onboarding begins when a business owner signs up using Google Sign-In. They are routed to a Stripe paywall to activate their 30-day free trial. They input their credit card, and Stripe takes over. Once the payment succeeds, an ⁠isActive⁠:True signal is sent to Firebase, granting them access to the platform.
+This handoff between third-party payment processors and the database requires guarding against spoofed requests and network retries (replay attacks). This sequence ensures that a user is activated after a cryptographically verified, single-process payment.
+
 
 ![Stripe Webhook Security](./assets/FirstTimeSignupAndWebhookSecurity.png)
 
