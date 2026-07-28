@@ -1,6 +1,6 @@
 # Barnegon — AI Chat & Lead Generation Infrastructure
 
-A production-ready, multi-tenant SaaS platform built for service businesses. This repository contains the unified frontend and backend architecture, featuring zero-trust bot defense, dynamic domain provisioning, and distributed webhook security.
+A production ready, SaaS platform built for service businesses. This repository contains the frontend and backend architecture, featuring zero-trust bot defense, dynamic domain provisioning, and webhook security.
 
 ## System Architecture
 
