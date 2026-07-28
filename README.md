@@ -21,15 +21,18 @@ This handoff between third-party payment processors and the database requires gu
 #### Manage/Cancel Billing
 ![Manage Billing Flow](./assets/ManageBilling.png)
 
-### 2. Multi-Tenant Domain Provisioning (The Bucket System)
+### 2. The First-Time Setup (Dynamic Domain Provisioning)
 
-Cloudflare Turnstile enforces a hard limit of 10 allowed domains per widget sitekey. To support a scalable SaaS architecture without manual intervention, this system employs a dynamic "bucket pooling" algorithm.
+
+Once the account is activated, the business owner opens a first-time setup screen. They input their core business details, most importantly, their website's domain name. This domain is whitelisted so the Barnegon chat widget can operate on their site. The domain is saved in Firestore and pushed into Cloudflare's Turnstile system for botnet defense.
+Cloudflare Turnstile enforces a limit of 10 allowed domains per widget sitekey; therefore, this scalable SaaS architecture needs a dynamic provisioning algorithm so no manual intervention is needed.
+
 
 ![Domain Provisioning](./assets/DomainProvisioning.png)
 
-*   **Capacity Polling:** When a new client provisions a custom domain via the dashboard, the backend queries the database for a widget "bucket" with an active `domainCount` under 10.
-*   **Dynamic Appending:** If an open slot exists (1-9 domains), the backend uses Cloudflare's Management API to seamlessly append the new domain to the existing widget and increments the database counter.
-*   **Autonomous Minting:** If all existing buckets are full (10/10), the system automatically executes a `POST` request to Cloudflare to mint an entirely new widget, retrieves the new Sitekey/Secret pair, stores it in the database, and begins filling the new bucket.
+*   **Capacity Polling:** When a new client adds a domain via the dashboard, the backend checks the database for a widget with a `domainCount` under 10.
+*   **Dynamic Appending:** If there is an open slot (1-9 domains), the backend uses Cloudflare's Management API to add the new domain to the existing widget and increases the database counter.
+*   **Autonomous Minting:** If all existing widgets are full (10/10), it automatically executes a `POST` request to Cloudflare to create an entirely new widget, retrieves the new Sitekey/Secret pair, stores it in the database, and begins filling the new widget.
 
 ### 3. Zero-Trust Architecture & Lead Verification
 
