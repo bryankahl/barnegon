@@ -1,6 +1,6 @@
 # Barnegon — AI Chat & Lead Generation Infrastructure
 
-A production ready, SaaS platform built for service businesses. This repository contains the frontend and backend architecture, featuring zero-trust bot defense, dynamic domain provisioning, and webhook security.
+A production-ready SaaS platform built for service businesses. This repository contains the frontend and backend architecture, featuring zero-trust bot defense, dynamic domain provisioning, and webhook security.
 
 ## System Architecture
 
@@ -47,7 +47,7 @@ The custom chatbot is now embedded live on the client's website. Traditional fir
 *   **Frontend Security:** Turnstile runs an invisible background check and searches for a cryptographic token from the user's OS. It forces the computer to solve a math problem; a human solves this instantly, but a spammer with 10,000 IPs will crash their own server attempting the math.
 *   **The Coat Check:** Turnstile issues a one-time cryptographic token after completing the human check.
 *   **Middleware Shield (`verifyTurnstile.js`):** We never trust the frontend, because hackers can forge "passed" requests via API. This middleware acts as a universal shield for all secure routes. The backend authenticates the token directly with Cloudflare via ⁠`siteverify⁠` validation.
-*   **Web Application Firewall (WAF):** Turnstile stops bots, but it does not stop a human from manually inputting a malicious script into the form. Turnstile verifies the messenger, but it does not verify the message. To prevent Stored XSS and Database Poisoning for no cost, a Custom Node.js WAF sanitizes the payload.To protect the Node.js CPU from resource exhaustion as traffic scales, payload inspection will eventually be offloaded to Cloudflare's Enterprise WAF (Payload Inspection).
+*   **Web Application Firewall (WAF):** Turnstile stops bots, but it does not stop a human from manually inputting a malicious script into the form. Turnstile verifies the messenger, but it does not verify the message. To prevent Stored XSS and Database Poisoning for no cost, a Custom Node.js WAF sanitizes the payload. To protect the Node.js CPU from resource exhaustion as traffic scales, payload inspection will eventually be offloaded to Cloudflare's Enterprise WAF (Payload Inspection).
 
 
 ### 4. The AI Pipeline
@@ -64,7 +64,7 @@ Directly connecting user inputs to the OpenAI API is a massive security and fina
 *   **Context Assembly:** OpenAI starts with a blank slate and knows nothing about the specific SaaS clients. The backend queries Firestore for the specific business ID, pulls that business's hours, services, and custom instructions (e.g., "Do not offer discounts"), and injects them directly into the System Prompt.
 *   **Token Optimization (Memory Condensation):** Without optimization, an entire chat thread gets sent to OpenAI on every call, burning through the API budget as the conversation grows. The system monitors message count; if a thread exceeds 6 messages, a background call to ⁠`gpt-4o⁠` condenses the history into a 150-token active summary, replacing the bulky history and preventing AI hallucinations.
 *   **Guarded Fetch:** The server makes the HTTP request to OpenAI to generate a reply, but the fetch is wrapped in an ⁠`AbortController⁠`. If OpenAI's servers hang and don't respond within 20 seconds, the server forcefully severs the connection (⁠504 Gateway Timeout⁠). This prevents the Render server threads from crashing due to resource exhaustion.
-*   **Teturn Trip & Safe Render:** The frontend takes over once the AI response makes it back down the pipeline. Because hallucinated AI code could break the site, the frontend binds the response as strict text (⁠`.textContent`⁠), neutralizing all scripts. Finally, an artificial 900ms delay is injected before rendering to mimic natural human typing latency.
+*   **Return Trip & Safe Render:** The frontend takes over once the AI response makes it back down the pipeline. Because hallucinated AI code could break the site, the frontend binds the response as strict text (⁠`.textContent`⁠), neutralizing all scripts. Finally, an artificial 900ms delay is injected before rendering to mimic natural human typing latency.
 
 ---
 
