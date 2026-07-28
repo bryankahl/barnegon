@@ -7,19 +7,21 @@ A production ready, SaaS platform built for service businesses. This repository 
 ### 1. The Onboarding (Auth, Billing & Webhook Security)
 
 
-The onboarding begins when a business owner signs up using Google Sign-In. They are routed to a Stripe paywall to activate their 30-day free trial. They input their credit card, and Stripe takes over. Once the payment succeeds, an ⁠isActive⁠:True signal is sent to Firebase, granting them access to the platform.
-This handoff between third-party payment processors and the database requires guarding against spoofed requests and network retries (replay attacks). This sequence ensures that a user is activated after a cryptographically verified, single-process payment.
+The onboarding begins when a business owner signs up using Google Sign-In. The vulnerability here is that if you let the frontend code confirm that a payment was successful, a hacker can easily fake a "success" message and get a free account. The solution is a split process. The frontend handles sending the user to a Stripe paywall to activate their 30-day free trial, but only the backend is allowed to activate the account.
 
 
 ![Stripe Webhook Security](./assets/FirstTimeSignupAndWebhookSecurity.png)
 
-*   **Identity Injection:** When a user starts checkout, their Firebase UID is embedded into the Stripe Checkout metadata, coupling the transaction to their auth state.
-*   **Cryptographic Verification:** The inbound `/webhook` endpoint intercepts the raw request buffer and mathematically verifies the HMAC signature against a local environment secret. Invalid signatures are instantly dropped.
-*   **Database-Level Idempotency Lock:** Race conditions or duplicate webhook deliveries may trigger double activations; therefore, to prevent this, the backend attempts to `.create()` a Firestore document using the single Stripe `event.id`. 
-*   **Graceful Failures:** If the document already exists, it means the webhook is a duplicate. The system catches the error, terminates the activation logic, but still returns a `200 OK` to satisfy Stripe's retry mechanism.
+*   **First Time Sign Up:** When a new user signs up, the backend first checks their Firebase token to make sure they are a real, logged-in user.
+*   **Metadata Tag:** The server asks Stripe to create a checkout page. Crucially, the server takes the user's Firebase ID and attaches it to the checkout session as hidden data (metadata). This invisible tag is how the server remembers exactly which database profile to activate after the user finishes paying on Stripe's website.
+*   **Webhook Security:** Because the server's ⁠/webhook⁠ URL has to be public to receive messages from Stripe, the threat is that anyone can try to send a fake JSON message saying a payment succeeded. Stripe signs all real messages with a secret mathematical key. When a message hits the server, it checks this signature; if the math doesn't perfectly match our server's secret key, the request is instantly deleted. Fake payments never even reach the database.
+*   **Database Lock:** What if a hacker (or a network glitch) intercepts a real Stripe message and sends it to the server 100 times to crash the system? Every single Stripe message has a unique ID number. Before doing anything, the server tries to save this ID in the database. Firestore uses an atomic write (⁠.create()⁠), meaning if that ID is already there, it instantly throws an error (Code 6). The server sees the error, knows it's a duplicate message, and safely ignores it.
+*   **Activating the Account:** Once the webhook passes the signature check and the duplicate check, the server reads that hidden Firebase ID we saved back in Step 1. It goes to the ⁠businesses⁠ collection, updates the user's profile to active, and saves their newly created Stripe Customer ID. Access is granted, and the user is now officially inside the app.
 
 #### Manage/Cancel Billing
 ![Manage Billing Flow](./assets/ManageBilling.png)
+
+When an existing user wants to view their subscription or cancel, they click "Manage Billing". Because the platform features no stored credit cards, the frontend asks the server for a portal link. The server grabs that Stripe Customer ID we saved earlier and asks Stripe for a secure, temporary link. The user is sent to Stripe's hosted portal to cancel or update their card. If they cancel, Stripe sends another verified webhook back to our server to turn their access off.
 
 ### 2. The First-Time Setup (Dynamic Domain Provisioning)
 
