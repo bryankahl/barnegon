@@ -13,11 +13,12 @@ This handoff between third-party payment processors and the database requires gu
 
 ![Stripe Webhook Security](./assets/FirstTimeSignupAndWebhookSecurity.png)
 
-*   **Identity Injection:** When a user initiates checkout, their Firebase UID is embedded directly into the Stripe Checkout metadata, tightly coupling the transaction to their auth state.
-*   **Cryptographic Verification:** The inbound `/webhook` endpoint intercepts the raw request buffer and verifies the HMAC signature against a local environment secret. Invalid signatures are instantly dropped (`400 Bad Request`).
-*   **Database-Level Idempotency Lock:** To prevent race conditions or duplicate webhook deliveries from triggering double-activations, the backend attempts to `.create()` a Firestore document using the unique Stripe `event.id`. 
-*   **Graceful Failures:** If the document already exists (Firestore Error Code 6), it means the webhook is a duplicate. The system catches the error, aborts the activation logic, but still returns a `200 OK` to satisfy Stripe's retry mechanism.
+*   **Identity Injection:** When a user starts checkout, their Firebase UID is embedded into the Stripe Checkout metadata, coupling the transaction to their auth state.
+*   **Cryptographic Verification:** The inbound `/webhook` endpoint intercepts the raw request buffer and mathematically verifies the HMAC signature against a local environment secret. Invalid signatures are instantly dropped.
+*   **Database-Level Idempotency Lock:** Race conditions or duplicate webhook deliveries may trigger double activations; therefore, to prevent this, the backend attempts to `.create()` a Firestore document using the single Stripe `event.id`. 
+*   **Graceful Failures:** If the document already exists, it means the webhook is a duplicate. The system catches the error, terminates the activation logic, but still returns a `200 OK` to satisfy Stripe's retry mechanism.
 
+#### Manage/Cancel Billing
 ![Manage Billing Flow](./assets/ManageBilling.png)
 
 ### 2. Multi-Tenant Domain Provisioning (The Bucket System)
