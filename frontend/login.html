@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Log In – Barnegon</title>
+
+  <!-- Tailwind CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- Modern Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Fancy scrollbar for main Barnegon pages */
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f3f4f6; /* Light gray track */
+    border-radius: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #6366f1, #8b5cf6); /* Indigo to purple */
+    border-radius: 10px;
+    border: 2px solid white;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #4f46e5, #7c3aed);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(to bottom, #4338ca, #6d28d9); /* Prevent turning white */
+  }
+
+  body {
+    scrollbar-color: #6366f1 #f3f4f6; /* Firefox fallback */
+    scrollbar-width: thin;
+  }
+  </style>
+  
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-white text-gray-900 min-h-screen flex flex-col">
+  <!-- Header -->
+  <nav class="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <a href="/" class="flex items-center">
+        <img 
+          src="/Images/BarnegonFullWordLogo.png" 
+          alt="Barnegon AI" 
+          class="h-20 w-auto object-contain -my-2"
+        />
+      </a> 
+    </div>
+  </nav>
+  <!-- Faint background logo -->
+<!-- Massive faint background logo -->
+<img src="Images/BarnegonLogo.png" alt="Background Logo"
+class="absolute opacity-5 sm:opacity-4 w-[1200px] sm:w-[1600px] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none z-0 blur-md"/>
+
+  <!-- Auth Card -->
+  <main class="relative flex-grow flex items-center justify-center p-6 pt-24 z-10">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md text-center p-10 border border-gray-200">
+
+      <!-- Illustration -->
+      <img src="Images/BarnegonLogo.png" alt="Barnegon logo" class="w-24 mx-auto mb-6 rounded-xl shadow-sm">
+
+      <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Welcome Back</h1>
+      <p class="text-sm text-gray-500 mb-6">Log in to access your Barnegon dashboard</p>
+
+      <!-- Google Sign In Button -->
+      <button id="google-signin" class="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 px-4 rounded-full hover:brightness-110 transform hover:scale-105 transition duration-200 shadow-md">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="w-5 h-5" />
+        <span>Continue with Google</span>
+      </button>      
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-sm text-gray-400 pb-4">
+    © 2026 Barnegon™. All rights reserved.
+  </footer>
+
+  <!-- Firebase Auth Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDk2r-uT-iNV6GJAlMB0gm8asAoRr-JG90",
+      authDomain: "ai-agent-demo-9fe52.firebaseapp.com",
+      projectId: "ai-agent-demo-9fe52",
+      storageBucket: "ai-agent-demo-9fe52.firebasestorage.app",
+      messagingSenderId: "1028319770796",
+      appId: "1:1028319770796:web:e25a0deb2f9dfbf1ce4709"
+    };
+
+    const DEV_EMAILS = ["bryankahl28@gmail.com", "pledgehomeservices@gmail.com"];
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const signInButton = document.getElementById("google-signin");
+
+    signInButton.addEventListener("click", async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        if (DEV_EMAILS.includes(user.email)) {
+          window.location.href = "dashboard.html";
+          return;
+        }
+
+        const bizRef = doc(db, "businesses", user.uid);
+        let bizSnap = await getDoc(bizRef);
+
+        if (!bizSnap.exists()) {
+          await setDoc(bizRef, {
+            createdAt: serverTimestamp(),
+            isActive: false
+          });
+
+          const idToken = await user.getIdToken();
+
+          const res = await fetch("https://homebase-stripe-backend-clean.onrender.com/api/stripe/create-checkout-session", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+              uid: user.uid,
+              success_url: window.location.origin + "/dashboard.html",
+              cancel_url: window.location.origin + "/index.html"
+            })
+          });
+ 
+
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            alert("Something went wrong while redirecting to checkout.");
+            console.error("Stripe error:", data);
+          }
+          return;
+        }
+
+        const data = bizSnap.data();
+        const isActive = data.isActive === true;
+
+        if (isActive) {
+          window.location.href = "dashboard.html";
+        } else {
+          const idToken = await user.getIdToken();
+
+          const res = await fetch("https://homebase-stripe-backend-clean.onrender.com/api/stripe/create-checkout-session", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+              uid: user.uid,
+              success_url: window.location.origin + "/dashboard.html",
+              cancel_url: window.location.origin + "/index.html"
+            })
+          });
+
+
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            alert("Something went wrong while redirecting to checkout.");
+            console.error("Stripe error:", data);
+          }
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        alert("Something went wrong during sign-in. Please try again.");
+      }
+    });
+  </script>
+</body>
+</html>

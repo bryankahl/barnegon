@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – Barnegon</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/libphonenumber-js@1.10.24/bundle/libphonenumber-max.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/css/intlTelInput.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;600;700&family=Rubik:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+  <style>
+    html, body {
+      font-family: 'Inter', sans-serif;
+      scroll-behavior: smooth;
+    }
+  
+    .tab-content {
+      display: none;
+    }
+  
+    .tab-content.active {
+      display: block;
+    }
+  
+    .input {
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      font-size: 1.05rem;
+      color: #111827;
+      outline: none;
+    }
+  
+    .input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+    }
+    .draggable-field:active {
+    cursor: grabbing;
+  }
+  .sortable-chosen {
+    cursor: grabbing !important;
+  }
+
+  .draggable-field {
+    cursor: grab;
+  }
+
+  .sortable-chosen {
+  transform: scale(1.01);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s ease;
+}
+
+.feature-bubble {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  opacity: 0;
+  animation: fadeInUp 0.7s ease forwards;
+}
+
+.feature-bubble:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fancy scrollbar for main Barnegon pages */
+::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f3f4f6; /* Light gray track */
+    border-radius: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #6366f1, #8b5cf6); /* Indigo to purple */
+    border-radius: 10px;
+    border: 2px solid white;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #4f46e5, #7c3aed);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(to bottom, #4338ca, #6d28d9); /* Prevent turning white */
+  }
+
+  body {
+    scrollbar-color: #6366f1 #f3f4f6; /* Firefox fallback */
+    scrollbar-width: thin;
+  }
+
+  /* Sticky tab bar under the fixed nav */
+  :root { --nav-h: 64px; } /* nav is ~64px high given your mt-16 spacing */
+  .sticky-tabs {
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 40;           /* below nav (z-50), above content */
+    background: #ffffff;   /* prevents translucency when scrolling over sections */
+  }
+
+  /* Make the sticky tabs taller and more distinct */
+  .sticky-tabs {
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 40;
+    background: #ffffff;
+    padding: 0.75rem 0;      /* more vertical breathing room */
+    border-bottom: 1px solid #e5e7eb; /* subtle separation */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* subtle elevation */
+  }
+
+  .sticky-tabs button:hover {
+    background-color: #f9fafb; /* very light gray on hover */
+    border-radius: 6px;
+    transition: background-color 0.15s ease;
+  }
+
+  /* === Enhanced Tab Bar Styling === */
+  #tabs-bar {
+    margin-top: 1.5rem; /* extra space before welcome section */
+    border-radius: 1rem; /* rounded corners */
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15); /* soft indigo shadow */
+    background: #fff;
+    padding: 0.75rem 1rem; /* breathing room inside */
+    display: flex;
+    flex-wrap: nowrap; /* force all tabs on one line */
+    overflow-x: auto; /* allow horizontal scroll if screen is too narrow */
+    gap: 1.25rem;
+    overflow-y: hidden;     /* kill tiny vertical bar */
+    -ms-overflow-style: none;  /* IE/Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+
+  #tabs-bar::-webkit-scrollbar {  /* Chrome/Safari */
+    width: 0;
+    height: 0;
+  }
+
+  /* Indigo haze effect */
+  #tabs-bar::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 1.25rem;
+    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.15), transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* Tab button polish */
+  #tabs-bar button {
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  #tabs-bar button:hover {
+    background-color: #f3f4f6; /* subtle hover bg */
+    color: #4f46e5; /* indigo hover */
+  }
+
+  #tabs-bar button.active {
+    background: #eef2ff; /* light indigo bg for active */
+    color: #4f46e5;
+    border-radius: 0.5rem;
+    box-shadow: inset 0 -2px 0 #6366f1;
+  }
+
+  </style>
+  
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+  <div id="gatekeeper" class="fixed inset-0 bg-white z-50 flex items-center justify-center text-lg font-semibold">
+    Checking access...
+  </div>
+  <!-- Spinner shown while dashboard loads -->
+  <div id="dashboard-loading" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
+    <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+    </svg>
+  </div>
+
+
+  <!-- Navigation -->
+<nav id="main-nav" class="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-6 py-4">
+  <div class="max-w-7xl mx-auto flex justify-between items-center">
+    
+    <!-- Logo + Brand -->
+    <a href="/" class="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
+      <img src="Images/BarnegonLogo.png" alt="Barnegon logo" class="h-8" />
+    </a>
+
+    <!-- Dashboard Dropdown (☰ menu) -->
+    <div class="relative">
+      <div id="hamburger" class="cursor-pointer text-xl text-indigo-600 hover:text-indigo-800 transform hover:scale-105 transition duration-200">☰</div>
+      <div id="dropdown" class="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border hidden z-50">
+        <a href="#" id="manageBillingBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Manage Billing</a>
+        <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+  
+
+  <main class="flex flex-col lg:flex-row gap-6 px-4 md:px-10 py-10 max-w-7xl mx-auto mt-16">
+    <div id="dashboard-controls" class="w-full lg:w-2/3 space-y-8">
+
+      <div id="tabs-bar" class="sticky-tabs flex flex-wrap gap-6 text-sm border-b mt-10">
+        <button class="tab-btn active text-indigo-600 border-b-2 border-indigo-600 pb-2" data-tab="home">Welcome</button>
+        <button class="tab-btn text-gray-600 hover:text-indigo-600 pb-2" data-tab="info">Business Info</button>
+        <button class="tab-btn text-gray-600 hover:text-indigo-600 pb-2" data-tab="form">Lead Form</button>
+        <button class="tab-btn text-gray-600 hover:text-indigo-600 pb-2" data-tab="calendars">Calendars</button>
+        <button class="tab-btn text-gray-600 hover:text-indigo-600 pb-2" data-tab="bubbles">Bubbles</button>
+        <button class="tab-btn text-gray-600 hover:text-indigo-600 pb-2" data-tab="embed">Install Agent</button>
+        <button class="tab-btn text-gray-600 hover:text-indigo-600 pb-2" data-tab="leads">Captured Leads</button>
+        <button class="tab-btn text-gray-600 hover:text-indigo-600 pb-2" data-tab="insights">Insights</button>
+      </div>
+
+      <!-- Tab: Welcome -->
+      <div id="tab-home" class="tab-content active space-y-6 text-[17px] leading-relaxed text-gray-800">
+        <h2 class="text-3xl font-extrabold text-indigo-700 flex items-center gap-2">Welcome to Barnegon</h2>
+      
+        <p class="text-lg text-gray-600 max-w-3xl">
+          Your AI assistant is ready to work for you — just fill in your business info, customize your bot, and hit save.
+        </p>
+      
+        <div class="grid gap-6 sm:grid-cols-2 mt-4">
+          <div class="feature-bubble">
+            <h3 class="text-lg font-semibold text-indigo-700 mb-2">Customize Your Agent</h3>
+            <p class="text-gray-600 text-sm">Edit the personality, tone, hours, and pricing to match your business voice.</p>
+          </div>
+      
+          <div class="feature-bubble">
+            <h3 class="text-lg font-semibold text-indigo-700 mb-2">Connect Your Calendar</h3>
+            <p class="text-gray-600 text-sm">Let clients schedule appointments — even while you're offline.</p>
+          </div>
+      
+          <div class="feature-bubble">
+            <h3 class="text-lg font-semibold text-indigo-700 mb-2">Build Your Lead Form</h3>
+            <p class="text-gray-600 text-sm">Use bubbles, checkboxes, and more to qualify leads your way.</p>
+          </div>
+      
+          <div class="feature-bubble">
+            <h3 class="text-lg font-semibold text-indigo-700 mb-2">Launch on Your Site</h3>
+            <p class="text-gray-600 text-sm">Paste one embed script into your site — your AI agent goes live instantly.</p>
+          </div>
+      
+          <div class="feature-bubble">
+            <h3 class="text-lg font-semibold text-indigo-700 mb-2">Preview Instantly</h3>
+            <p class="text-gray-600 text-sm">See your changes live on the right side of your screen as you build.</p>
+          </div>
+      
+          <div class="feature-bubble">
+            <h3 class="text-lg font-semibold text-indigo-700 mb-2">Secure & Scalable</h3>
+            <p class="text-gray-600 text-sm">Backed by Firebase and Stripe — so your data stays safe and your growth stays smooth.</p>
+          </div>
+        </div>
+      
+        <div class="pt-6">
+          <p class="text-gray-500 italic text-sm">Need help? Email <a href="mailto:support@barnegon.com" class="text-indigo-600 hover:underline">support@barnegon.com</a></p>
+        </div>
+      </div>
+
+
+
+      <div id="tab-info" class="tab-content space-y-10 text-[17px] leading-snug">
+        <h2 class="text-3xl font-extrabold text-indigo-700 mb-4 flex items-center gap-2">Business Info</h2>
+      
+        <!-- SECTION: Business Basics -->
+        <div class="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">Business Basics</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="biz-name" class="block font-medium mb-2">Business Name</label>
+              <p class="text-sm text-gray-500 mb-2">This name appears at the top of your AI chat header.</p>
+              <input id="biz-name" type="text" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+            </div>
+
+            <div>
+              <label for="biz-website" class="block font-medium mb-2">Website URL</label>
+              <p class="text-sm text-gray-500 mb-2">The domain where your chat widget is installed.</p>
+              <input id="biz-website" type="url" placeholder="https://yourwebsite.com" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+            </div>
+          </div>
+        </div>
+      
+        <!-- SECTION: Services, Hours & Pricing -->
+        <div class="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">Services, Hours & Pricing</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="biz-services" class="block font-medium mb-2">Services</label>
+              <p class="text-sm text-gray-500 mb-2">List what you offer (e.g. deep cleaning, mulching, power washing, etc.) </p>
+              <textarea id="biz-services" rows="6" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px] resize-y"></textarea>
+            </div>
+            <div class="space-y-6">
+              <div>
+                <label for="biz-hours" class="block font-medium mb-2">Business Hours</label>
+                <input id="biz-hours" type="text" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+              </div>
+              <div>
+                <label for="biz-pricing" class="block font-medium mb-2">Pricing</label>
+                <input id="biz-pricing" type="text" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      
+        <!-- SECTION: AI Behavior -->
+        <div class="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">AI Behavior</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="biz-training" class="block font-medium mb-2">Custom AI Instructions</label>
+              <p class="text-sm text-gray-500 mb-2">Tell the AI how to speak, what to say, or anything it should know about your business. The more you tell it, the better...</p>
+              <textarea id="biz-training" rows="5" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px] resize-y"></textarea>
+            </div>
+            <div class="space-y-6">
+              <div>
+                <label for="biz-greeting" class="block font-medium mb-2">Greeting</label>
+                <p class="text-sm text-gray-500 mb-2">This is the first thing users see when your chat opens. Be sure to click the "Enable Smart Greeting" button to activate it.</p>
+                <input id="biz-greeting" type="text" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="checkbox" id="enable-greeting" class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" />
+                <label for="enable-greeting" class="text-gray-700">Enable Smart Greeting</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+        <!-- SECTION: Contact Info -->
+        <div class="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">Contact Info</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="biz-phone" class="block font-medium mb-2">Phone</label>
+              <p class="text-sm text-gray-500 mb-2">Important! By inputing your phone number you opt in to get notified via SMS alerts of all captured leads! This also appears when someone clicks the “Contact Info” button in your chat.</p>
+              <input id="biz-phone" type="text" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+            </div>
+            <div>
+              <label for="biz-email" class="block font-medium mb-2">Email</label>
+              <p class="text-sm text-gray-500 mb-2">Important! By inputing your email you opt in to get notified of all captured leads! This also appears when someone clicks the “Contact Info” button in your chat.</p>
+              <input id="biz-email" type="email" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+            </div>
+          </div>
+
+          <!-- ✅ Notification toggles go here -->
+          <div class="flex flex-col gap-3 mt-2">
+            <label class="flex items-center gap-3 text-gray-700">
+              <input type="checkbox" id="notify-email" class="w-5 h-5 text-indigo-600 rounded border border-gray-300 focus:ring-indigo-500" />
+              Send Email Notifications
+            </label>
+            <label class="flex items-center gap-3 text-gray-700">
+              <input type="checkbox" id="notify-sms" class="w-5 h-5 text-indigo-600 rounded border border-gray-300 focus:ring-indigo-500" />
+              Send SMS Notifications
+            </label>
+          </div>
+        </div>
+      
+        <!-- SECTION: Appearance (revamped layout, same IDs) -->
+        <div class="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              Appearance
+            </h3>
+            <!-- tiny note for context, optional -->
+            <span class="text-sm text-gray-500">Customize the chat’s look & feel</span>
+          </div>
+
+          <!-- Compact, balanced 2-col on md+ -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Theme Color -->
+            <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-100">
+              <div class="min-w-0">
+                <label for="biz-color" class="block text-[15px] font-medium text-gray-800">Theme Color</label>
+                <span id="color-label" class="block text-[13px] text-gray-500 mt-0.5"></span>
+              </div>
+              <input id="biz-color" type="color" class="w-10 h-10 shrink-0 border border-gray-300 rounded-lg" />
+            </div>
+
+            <!-- Accent Color -->
+            <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-100">
+              <div class="min-w-0">
+                <label for="biz-text-color" class="block text-[15px] font-medium text-gray-800">Accent Color</label>
+                <span class="block text-[13px] text-gray-500 mt-0.5">Used for highlights (buttons, links)</span>
+              </div>
+              <input id="biz-text-color" type="color" class="w-10 h-10 shrink-0 border border-gray-300 rounded-lg" />
+            </div>
+
+            <!-- Chat Background -->
+            <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-100">
+              <div class="min-w-0">
+                <label for="biz-chat-bg" class="block text-[15px] font-medium text-gray-800">Chat Background</label>
+                <span class="block text-[13px] text-gray-500 mt-0.5">Applies to the messages area</span>
+              </div>
+              <input id="biz-chat-bg" type="color" class="w-10 h-10 shrink-0 border border-gray-300 rounded-lg" />
+            </div>
+
+            <!-- Neon Glow (compact row, doesn’t take a full tile) -->
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100">
+              <input id="biz-neon" type="checkbox" class="w-4 h-4 text-indigo-600 rounded border border-gray-300 focus:ring-indigo-500" />
+              <label for="biz-neon" class="text-[15px] font-medium text-gray-800">Enable Neon Glow</label>
+              <span class="ml-auto text-[12px] text-gray-500">Subtle outline around Agent</span>
+            </div>
+
+            <!-- Chat Font -->
+            <div class="p-3 rounded-xl border border-gray-100">
+              <label for="biz-font" class="block text-[15px] font-medium text-gray-800 mb-2">Chat Font</label>
+              <div class="flex items-center gap-3">
+                <!-- Dropdown -->
+                <select id="biz-font" class="px-3 py-2 rounded-xl border border-gray-300 w-full md:w-48">
+                  <option style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+                    value="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">
+                    Inter (default)
+                  </option>
+                  <option style="font-family: 'Poppins', Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+                    value="Poppins, Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">
+                    Poppins
+                  </option>
+                  <option style="font-family: 'Rubik', Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+                    value="Rubik, Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">
+                    Rubik
+                  </option>
+                  <option style="font-family: 'Nunito', Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+                    value="Nunito, Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">
+                    Nunito
+                  </option>
+                  <option style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+                    value="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">
+                    System UI
+                  </option>
+                  <option style="font-family: Georgia, 'Times New Roman', Times, serif"
+                    value="Georgia, 'Times New Roman', Times, serif">
+                    Serif (Georgia)
+                  </option>
+                  <option style="font-family: Monaco, Consolas, 'Liberation Mono', monospace"
+                    value="Monaco, Consolas, 'Liberation Mono', monospace">
+                    Monospace
+                  </option>
+                </select>
+
+                <!-- Preview -->
+                <div class="flex flex-col">
+                  <label class="text-xs text-gray-500 mb-1">Preview</label>
+                  <div id="font-preview"
+                    class="px-2 py-1 rounded-lg border border-gray-200 bg-white text-[14px] leading-snug w-32 text-center">
+                    Font Test
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Spacer keeps grid tidy on md when odd count -->
+            <div class="hidden md:block"></div>
+          </div>
+        </div>
+
+      
+        <!-- SECTION: Online Presence -->
+        <div class="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">Online Presence</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="reviewsInput" class="block font-medium mb-2">Google Reviews</label>
+              <p class="text-sm text-gray-500 mb-2">Input your Google Reviews link or URL in here only. This appears when someone clicks the "Google Reviews" button in your chat.</p>
+              <input id="reviewsInput" type="url" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+            </div>
+            <div>
+              <label for="areasInput" class="block font-medium mb-2">Areas You Serve</label>
+              <p class="text-sm text-gray-500 mb-2">This appears when someone clicks the “Areas We Serve” button in your chat.</p>
+              <textarea id="areasInput" rows="3" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px] resize-y"></textarea>
+            </div>
+            <div>
+              <label for="biz-about" class="block font-medium mb-2">About Us Message</label>
+              <p class="text-sm text-gray-500 mb-2">This appears when someone clicks the “About Us” button in your chat.</p>
+              <textarea id="biz-about" rows="4" class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px] resize-y"></textarea>
+            </div>            
+          </div>
+        </div> 
+
+        <!-- SECTION: CRM / Webhooks -->
+        <div class="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6" id="crm-webhooks-card">
+          <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">CRM / Webhooks</h3>
+
+          <div class="space-y-4">
+            <div>
+              <label for="crm-webhook" class="block font-medium mb-2">Webhook URL</label>
+              <p class="text-sm text-gray-500 mb-2">
+                Paste a webhook from <strong>Zapier</strong>, <strong>Make</strong>, <strong>Pabbly</strong>, <strong>n8n</strong>, or your own HTTPS endpoint.
+                We’ll POST every new lead here as JSON.
+              </p>
+              <input id="crm-webhook" type="url" placeholder="https://hooks.zapier.com/..." class="w-full px-5 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[17px]" />
+            </div>
+
+            <div class="text-sm text-gray-600 bg-gray-50 border rounded-xl p-4">
+              <p class="font-semibold mb-1">How to test (no button needed):</p>
+              <ol class="list-decimal ml-5 space-y-1">
+                <li>In Zapier/Make/Pabbly, create a webhook trigger and copy its URL.</li>
+                <li>Paste it above and click <em>Save Changes</em> (top/right of Business Info tab).</li>
+                <li>In your automation tool, click <em>Test trigger</em> (it will wait for data).</li>
+                <li>Go to your site and submit a real lead through the Barnegon agent.</li>
+                <li>Return to your automation tool, map fields (e.g., <code>fields.Name</code>, <code>fields.Email</code>), and turn it <strong>ON</strong>.</li>
+              </ol>
+              <p class="text-xs text-gray-500 mt-2">Tip: You can also test with <a href="https://webhook.site" target="_blank" class="text-indigo-600 underline">webhook.site</a> by pasting its URL above and submitting a lead.</p>
+            </div>
+
+            <details id="crm-help" class="border rounded-xl p-4">
+              <summary class="cursor-pointer font-semibold text-gray-800">Step-by-step examples</summary>
+              <div class="mt-3 space-y-6 text-sm text-gray-700">
+                <div>
+                  <h4 class="font-semibold mb-1">Zapier (Webhooks by Zapier → Your CRM)</h4>
+                  <ol class="list-decimal ml-5 space-y-1">
+                    <li>Zapier → <em>Create Zap</em> → Trigger: <em>Webhooks by Zapier</em> → <em>Catch Hook</em>.</li>
+                    <li>Copy the URL; paste above; <em>Save Changes</em>.</li>
+                    <li>Click <em>Test trigger</em> in Zapier; submit a lead on your site.</li>
+                    <li>Action: e.g., HubSpot “Create Contact”; map <code>fields.Name</code>, <code>fields.Email</code>, <code>fields["Phone Number"]</code>.</li>
+                    <li>Turn Zap <strong>ON</strong>.</li>
+                  </ol>
+                </div>
+
+                <div>
+                  <h4 class="font-semibold mb-1">Make (Integromat)</h4>
+                  <ol class="list-decimal ml-5 space-y-1">
+                    <li>Create Scenario → <em>Webhooks → Custom webhook</em> → copy URL.</li>
+                    <li>Paste above; <em>Save Changes</em> → click <em>Run once</em>.</li>
+                    <li>Submit a lead on your site → Make captures sample → add CRM module and map fields.</li>
+                    <li>Turn Scenario <strong>ON</strong>.</li>
+                  </ol>
+                </div>
+
+                <div>
+                  <h4 class="font-semibold mb-1">Pabbly Connect</h4>
+                  <ol class="list-decimal ml-5 space-y-1">
+                    <li>Create Workflow → Trigger: <em>Webhook</em> → copy URL.</li>
+                    <li>Paste above; <em>Save Changes</em> → click <em>Capture Webhook Response</em>.</li>
+                    <li>Submit a lead on your site → map fields in your CRM action → turn ON.</li>
+                  </ol>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+
+      
+        <!-- Floating Save Dock (bottom-left) -->
+        <!-- Floating Save Dock (bottom-left) -->
+        <div id="save-dock" class="fixed left-6 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 transition-opacity duration-200 opacity-0 pointer-events-none">
+          <div class="rounded-xl bg-white/90 backdrop-blur border border-gray-200 shadow px-3 py-2 flex items-center gap-2">
+            <span id="save-badge" class="hidden w-2 h-2 rounded-full bg-amber-500"></span>
+            <button id="save-btn" class="px-3 py-2 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow disabled:opacity-50 disabled:cursor-not-allowed">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+      
+    
+      <!-- Tab: Lead Form -->
+<div id="tab-form" class="tab-content space-y-10 text-[18px] leading-relaxed text-gray-800">
+  <!-- Header -->
+  <div class="space-y-4 border-b pb-6">
+    <h2 class="text-4xl font-extrabold text-indigo-700 flex items-center gap-3">
+      Lead Form Builder
+    </h2>
+    <div class="bg-yellow-50 border border-yellow-300 text-yellow-900 p-6 rounded-xl shadow-inner max-w-3xl space-y-2 text-[16px]">
+      <h3 class="text-xl font-semibold flex items-center gap-2">How the Lead Form Works</h3>
+      <ul class="list-disc list-inside space-y-1">
+        <li><strong>Field Label</strong>: The question your AI agent asks (e.g. “Phone Number” or “Preferred Service”), any question you want to ask!</li>
+        <li><strong>Field Type</strong>: Choose how users answer: Text, Paragraphs, Checkboxes, or Bubbles.</li>
+        <li><strong>Options</strong>: Add response options for Checkboxes or Bubbles.</li>
+        <li><strong>Required</strong>: Toggle whether the field must be answered before submission (Required Tag).</li>
+        <li><strong>Reorder</strong>: Drag and drop fields or options to change the order they appear.</li>
+        <li><strong>Delete</strong>: Use the "Delete Field" button to remove a field or ❌ to remove individual options.</li>
+      </ul>
+    </div>    
+    <div class="bg-blue-50 border border-blue-300 text-blue-900 p-5 rounded-xl shadow-inner text-[16px] max-w-3xl">
+      <strong>How it connects:</strong> Lead forms don’t show up on their own — they appear when you link them to your own <span class="font-semibold">preset chat bubble</span> inside the <span class="font-semibold">Bubbles</span> tab.
+    </div>
+    <p class="text-sm text-gray-500 italic mt-2">
+      ⚠️ Leads submitted from this dashboard preview may not include full labels in email notifications. For fully labeled lead submissions, please test using your live website agent.
+      </p>      
+    
+  </div>
+
+  <div class="flex items-center gap-4 text-[17px]">
+    <label for="form-selector" class="font-semibold text-gray-800">Choose Lead Form:</label>
+    <select id="form-selector" class="px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <!-- Options are added dynamically in script.js -->
+    </select>    
+    <button id="new-form-btn" class="bg-green-600 text-white px-3 py-2 rounded-xl text-sm font-medium hover:bg-green-700 transition">
+      New Form
+    </button>
+    <button id="rename-form-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-yellow-600 transition">
+      Rename Form
+    </button>    
+    <button id="delete-form-btn" class="ml-4 px-4 py-2 text-sm bg-red-600 text-white rounded-xl hover:bg-red-700">
+      Delete Selected Form
+    </button>    
+  </div>
+  <!-- Action Row -->
+  <div class="flex items-center justify-between max-w-4xl">
+    <h3 class="text-2xl font-bold text-gray-800">Your Form Fields</h3>
+    <button
+  id="add-form-field"
+  class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-lg font-semibold shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+>
+  Add Field
+</button>
+
+  </div>
+
+  <!-- Field Builder -->
+  <div id="custom-form-builder" class="space-y-8 max-w-4xl">
+    <!-- Fields are dynamically inserted here by script.js -->
+  </div>
+
+  <div class="hidden">
+    <button
+      id="refreshPageBtn"
+      class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-lg font-semibold shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+    >
+      Save Form
+    </button>
+  </div>
+  
+
+  <!-- Footer Note -->
+  <div class="pt-10 text-sm text-gray-500">
+    💡 Want to test it? Click Bubbles Tab, create a Preset Bubble, and view your agent on the right to click your preset bubble!
+  </div>
+</div>
+
+<!-- New Lead Form Modal -->
+<div id="newFormModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 space-y-6">
+    <h2 class="text-2xl font-bold text-gray-800">Create New Lead Form</h2>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Display Name <span class="text-gray-400 text-sm">(optional)</span></label>
+      <input id="form-display-name" type="text" placeholder="e.g. Hire Inquiry"
+        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 transition" />
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <button id="cancelFormBtn" class="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+      <button id="confirmFormBtn" class="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition font-medium">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename Lead Form Modal -->
+<div id="renameFormModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 space-y-6">
+    <h2 class="text-2xl font-bold text-gray-800">Rename Lead Form</h2>
+
+    <p class="text-sm text-gray-600 italic">Form ID: <span id="rename-static-id" class="font-semibold"></span></p>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">New Display Name <span class="text-gray-400 text-sm">(optional)</span></label>
+      <input id="rename-display-input" type="text"
+        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 transition" />
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <button id="cancelRenameBtn" class="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+      <button id="confirmRenameBtn" class="px-5 py-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition font-medium">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Lead Form Modal -->
+<div id="deleteFormModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 space-y-6">
+    <h2 class="text-2xl font-bold text-red-600">Delete Lead Form</h2>
+
+    <p class="text-gray-700 text-base">Are you sure you want to permanently delete this lead form? This cannot be undone.</p>
+    <p class="text-sm text-gray-500 italic">Form ID: <span id="delete-form-id-label" class="font-semibold text-gray-800"></span></p>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <button id="cancelDeleteBtn" class="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+      <button id="confirmDeleteBtn" class="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition font-medium">Delete</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Calendars Tab -->
+<div id="tab-calendars" class="tab-content hidden space-y-6 max-w-3xl">
+  <div class="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+    <h2 class="text-2xl font-bold text-indigo-600 flex items-center gap-2">
+      <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      Manage Calendars
+    </h2>
+
+    <div class="bg-indigo-50 border border-indigo-200 text-indigo-900 p-4 rounded-md shadow-sm mt-4">
+      <p class="text-sm">
+        Paste any booking link (Calendly, TidyCal, Koalendar, Cal.com). Most links will show directly inside the chat.
+      </p>
+      <p class="text-sm text-gray-500 mt-2">
+        Make sure to include <code class="font-mono text-indigo-700">https://</code> at the beginning of your calendar URL.
+      </p>
+    </div>
+
+    <div id="calendarList" class="mt-6 space-y-3"></div>
+
+    <div class="border-t pt-6 mt-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Add New Calendar</h3>
+      <div class="space-y-4">
+        <input id="calendarName" class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none" placeholder="Calendar name..." />
+        <p id="calendarNameError" class="hidden text-sm text-red-500 mt-1">Please enter a calendar name.</p>
+
+        <input id="calendarUrl" class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none" placeholder="Calendar URL..." />
+        <p id="calendarUrlError" class="hidden text-sm text-red-500 mt-1">Please enter a valid URL.</p>
+
+        <div class="flex gap-3 pt-2">
+          <button id="addCalendarBtn" class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+            Add & Save Calendar
+          </button>
+          <button id="refreshCalendarsBtn" class="bg-gray-100 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
+            Reload Agent
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-bubbles" class="tab-content space-y-8 text-[17px] leading-relaxed text-gray-800">
+  <!-- Heading -->
+  <div class="space-y-2">
+    <h2 class="text-4xl font-extrabold text-indigo-700">Preset Chat Bubbles</h2>
+    <p class="text-gray-600 max-w-2xl text-[16px]">
+      These buttons appear in your AI agent and trigger lead forms or calendars. Use them to guide users to the right next step.
+    </p>
+  </div>
+
+  <!-- Info Box -->
+  <div class="bg-purple-50 border border-purple-300 text-purple-900 p-5 rounded-xl shadow-inner text-[16px] max-w-3xl space-y-2">
+    <div class="flex items-center gap-2 text-[17px] font-medium">
+      💡 How It Works
+    </div>
+    <ul class="list-disc list-inside space-y-1 text-[15px] text-purple-800">
+      <li><strong>Bubble Name</strong>: What bubble name the user sees inside the agent (e.g. “Book Now” or “Ask a Question”).</li>
+      <li><strong>Target Type</strong>: Choose whether this bubble opens a lead form or calendar.</li>
+      <li><strong>Target ID</strong>: Select which form or calendar to launch.</li>
+    </ul>
+  </div>
+
+  <!-- Instruction -->
+  <p class="text-sm text-gray-500 pl-1">Manage your bubble triggers below. You can add new ones or update existing ones.</p>
+
+  <!-- Bubble UI -->
+  <div id="bubbleBindingsUI" class="space-y-4">
+    <!-- Dynamically injected via script.js -->
+  </div>
+
+  <!-- Static Bubbles Toggle Section -->
+<div class="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-4 mt-6">
+  <h3 class="text-xl font-semibold text-gray-800">Static Bubbles (Optional)</h3>
+  <p class="text-sm text-gray-500">
+    These bubbles automatically show info without needing a form or calendar.
+  </p>
+
+  <label class="flex items-center gap-3">
+    <input type="checkbox" class="bubble-checkbox" value="contact" />
+    <span><strong>Contact Info</strong> — Shows phone and email</span>
+  </label>
+  
+  <label class="flex items-center gap-3">
+    <input type="checkbox" class="bubble-checkbox" value="about" />
+    <span><strong>About Us</strong> — Shows your custom description from the "About Us Message" section in the "Business Info" tab.</span>
+  </label>
+  
+  <label class="flex items-center gap-3">
+    <input type="checkbox" class="bubble-checkbox" value="reviews" />
+    <span><strong>Google Reviews</strong> — Links to your reviews page</span>
+  </label>
+  
+  <label class="flex items-center gap-3">
+    <input type="checkbox" class="bubble-checkbox" value="areas" />
+    <span><strong>Areas we Serve</strong> — Shows the areas you service</span>
+  </label>
+  
+</div>
+
+
+  <!-- Buttons -->
+  <div class="flex flex-wrap gap-4">
+    <button id="addBubbleBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl font-semibold transition shadow">
+      Add Bubble
+    </button>
+    <button id="saveBubbleBindings" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl font-semibold transition shadow">
+      Save
+    </button>
+  </div>
+</div>
+
+
+
+      <!-- Tab: Embed -->
+      <div id="tab-embed" class="tab-content space-y-6 text-[17px] leading-relaxed text-gray-800">
+        <h2 class="text-4xl font-extrabold text-indigo-700">Embed Your AI Agent</h2>
+        <p class="mt-2">To activate your AI agent on your website, paste the following code snippet into your site’s HTML.</p>
+
+        <!-- Code Display -->
+        <div class="relative">
+          <pre class="bg-gray-900 text-indigo-300 text-sm rounded-xl p-5 overflow-x-auto font-mono whitespace-nowrap mb-3">
+      <code id="embed-code">&lt;script type="module" src="/src/agent-v2.js" biz="YOUR_ID_HERE"&gt;&lt;/script&gt;</code>
+          </pre>
+
+          <div class="flex justify-start">
+            <button id="copy-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-md font-semibold transition shadow">
+              Copy Embed Code
+            </button>
+          </div>
+        </div>
+        <!-- Platform Selector + Instructions -->
+        <div class="space-y-3 mt-10">
+          <label for="platform-select" class="block font-semibold text-gray-700">Choose your platform for more guidance:</label>
+          <select id="platform-select" class="w-full max-w-xs border border-gray-300 rounded-md px-3 py-2 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="wordpress">WordPress</option>
+            <option value="wix">Wix</option>
+            <option value="squarespace">Squarespace</option>
+            <option value="webflow">Webflow</option>
+            <option value="shopify">Shopify</option>
+            <option value="godaddy">GoDaddy</option>
+            <option value="other">Other / Custom</option>
+          </select>
+        </div>
+
+        <!-- Dynamic Instructions -->
+        <div id="platform-instructions" class="bg-gray-50 border border-gray-200 rounded-xl p-5 mt-4 space-y-2 text-[16px] leading-relaxed shadow-sm">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+
+
+      <!-- Tab: Captured Leads -->
+<div id="tab-leads" class="tab-content space-y-6">
+  <h2 class="text-3xl font-extrabold text-indigo-700 flex items-center gap-2">
+    Captured Leads
+  </h2>
+  <p class="text-gray-600">See all the leads submitted through your custom form.</p>
+
+  <input 
+    id="lead-search" 
+    type="text" 
+    placeholder="Search leads by name, email, or keyword..." 
+    class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+  />
+
+  <div id="leads-list" class="space-y-4"></div>
+
+  <div id="no-leads-msg" class="text-center text-gray-400 italic hidden">
+    No leads captured yet. Your AI assistant is waiting to greet them!
+  </div>
+</div>
+
+
+<!-- Tab: Insights -->
+<div id="tab-insights" class="tab-content space-y-6 text-[17px] leading-relaxed text-gray-800">
+  <h2 class="text-4xl font-extrabold text-indigo-700">Business Insights</h2>
+  <p class="max-w-2xl">This panel shows how users are interacting with your AI agent — leads, chats, clicks, messages, and calendar activity.</p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+    <!-- Total Leads -->
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[200px]">
+      <div>
+        <h3 class="font-semibold text-indigo-700 text-lg">Total Leads Captured</h3>
+        <p id="metric-leads" class="text-4xl font-extrabold text-gray-900 mt-4">0</p>
+      </div>
+      <p class="text-sm text-gray-500 mt-4">These are submitted lead form responses from your AI agent.</p>
+    </div>
+
+    <!-- Chats Started -->
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[200px]">
+      <div>
+        <h3 class="font-semibold text-indigo-700 text-lg">Chats Started</h3>
+        <p id="metric-chats" class="text-4xl font-extrabold text-gray-900 mt-4">0</p>
+      </div>
+      <p class="text-sm text-gray-500 mt-4">Each time someone starts a conversation with your agent.</p>
+    </div>
+
+    <!-- Calendar Clicks -->
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[200px]">
+      <div>
+        <h3 class="font-semibold text-indigo-700 text-lg">Calendar Clicks</h3>
+        <p id="metric-calendar" class="text-4xl font-extrabold text-gray-900 mt-4">0</p>
+      </div>
+      <p class="text-sm text-gray-500 mt-4">How many times people have clicked on your calendar links.</p>
+    </div>
+
+    <!-- Preset Button Clicks -->
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[200px]">
+      <div>
+        <h3 class="font-semibold text-indigo-700 text-lg">Preset Button Clicks</h3>
+        <div id="metric-preset" class="mt-4 space-y-1 text-sm text-gray-800">
+          <!-- Populated in script.js -->
+        </div>
+      </div>
+      <div class="flex justify-between items-end mt-auto">
+        <p class="text-sm text-gray-500 mt-4">Clicks from the custom preset bubbles.</p>
+        <button id="viewAllPresetBtn" class="text-xs text-indigo-600 font-medium hover:underline">
+          View All →
+        </button>
+      </div>
+    </div>
+    
+
+    <!-- Total Messages -->
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[200px]">
+      <div>
+        <h3 class="font-semibold text-indigo-700 text-lg">Total Customer Messages</h3>
+        <p id="metric-faqs" class="text-4xl font-extrabold text-gray-900 mt-4">0</p>
+      </div>
+      <p class="text-sm text-gray-500 mt-4">Includes all customer inputs sent to the AI agent.</p>
+    </div>
+    
+    <!-- 📬 Conversation Threads -->
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[200px] col-span-1 sm:col-span-2 lg:col-span-3">
+      <div>
+        <h3 class="font-semibold text-indigo-700 text-lg mb-4">Conversation Threads</h3>
+        <div id="thread-list" class="max-h-80 overflow-y-auto space-y-3 pr-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+          <p class="text-gray-500 text-sm">Loading conversations...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL: All Preset Clicks -->
+  <div id="allPresetModal" class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 hidden">
+    <div class="bg-white p-6 rounded-xl max-h-[80vh] overflow-y-auto w-[90%] max-w-xl shadow-xl">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">All Preset Button Clicks</h2>
+      <ul id="allPresetList" class="max-h-64 overflow-y-scroll pr-3 space-y-2 text-[15px] font-medium text-gray-800 border border-gray-200 rounded p-3 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+        <!-- Filled by script.js -->
+      </ul>
+      <div class="mt-6 text-right">
+        <button id="closePresetModal" class="text-white bg-indigo-600 px-4 py-2 rounded hover:bg-indigo-700">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 💬 Modal for viewing full conversation -->
+  <div id="conversationModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex justify-start transition-opacity duration-300 ease-out hidden">
+    <div id="conversationPanel"
+      class="bg-white w-full max-w-md h-full overflow-y-auto shadow-lg p-6 relative flex flex-col transform -translate-x-full transition-transform duration-300 ease-out"
+    >
+      <button id="closeConversationModal" class="absolute top-2 right-3 text-gray-600 hover:text-red-500 text-xl font-bold">&times;</button>
+      <h4 class="text-xl font-semibold mb-4 text-indigo-700">Conversation</h4>
+      <div id="conversationMessages" class="flex flex-col gap-3 text-[15px] text-gray-800 overflow-y-auto pr-2 flex-grow scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"></div>
+    </div>
+  </div>
+  
+
+</div>
+
+    </div>
+
+    
+  </div>
+
+  <div id="agent-preview-container" class="h-[620px] relative overflow-hidden"></div>
+
+
+  </div>
+</main>
+
+<div id="setup-overlay" style="z-index: 100;" class="fixed inset-0 bg-gray-50 hidden flex-col items-center justify-center p-4 overflow-y-auto">  <div class="bg-white max-w-2xl w-full rounded-2xl shadow-2xl border border-gray-200 p-8 space-y-6 animate-fade-in-up">
+    <div class="text-center space-y-2">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+      </div>
+      <h2 class="text-3xl font-extrabold text-gray-900">Welcome to Barnegon!</h2>
+      <p class="text-gray-500 text-lg">Let's get your AI agent ready in 30 seconds.</p>
+    </div>
+
+    <div class="space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+          <input id="setup-name" type="text" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Acme Cleaning Co." />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+          <input id="setup-website" type="url" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="https://..." />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+          <input id="setup-phone" type="tel" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="(555) 123-4567" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+          <input id="setup-email" type="email" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="contact@business.com" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Service Area / Cities</label>
+        <textarea id="setup-area" rows="2" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Austin, Round Rock, Pflugerville"></textarea>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">What services do you offer?</label>
+        <textarea id="setup-services" rows="2" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. House cleaning, deep cleaning, move-out cleans"></textarea>
+      </div>
+
+      <button id="complete-setup-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl text-lg shadow-lg transition transform active:scale-95">
+        Save & Launch Dashboard
+      </button>
+      
+      <p id="setup-error" class="text-red-500 text-sm text-center hidden">Please fill in the business name to continue.</p>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/intlTelInput.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js"></script>
+
+<script type="module" src="/src/js/dashboard/ui.js"></script>
+<script type="module" src="/src/script.js"></script>
+</body>
+
+</body>
+</html>
