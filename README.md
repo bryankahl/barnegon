@@ -53,16 +53,18 @@ The custom chatbot is now embedded live on the client's website. Traditional fir
 ### 4. The AI Pipeline
 
 
-With the visitor verified and the prompt sanitized, the request is sent to the OpenAI API. The AI processes the business context and responds to the user.
-However, chat interfaces inherently risk exponential token bloat and prompt-injection attacks. This architecture demonstrates memory consumption while ensuring UI safety and fault tolerance during those conversations.
+Directly connecting user inputs to the OpenAI API is a massive security and financial risk. To prevent server crashes and drained API budgets, the architecture executes a strict two-phase Zero-Trust pipeline: verifying the messenger, and then verifying the message.
 
-
-![AI Cognition and Sanitization](./assets/SanitizationAndAICognition.png)
 ![Chat Zero Trust](./assets/ChatZeroTrustIntercept.png)
+![AI Cognition and Sanitization](./assets/SanitizationAndAICognition.png)
 
-*   **Token Bounding (Memory Compaction):** To prevent limitless context windows from causing huge API costs, the system monitors message count. Once a thread exceeds 6 messages, a background process creates the older history into a 150-token active summary, keeping memory linear.
-*   **Fault-Tolerant Fetching:** LLM APIs can have extreme latency. The outbound fetch to OpenAI is wrapped in a 20-second `AbortController`. If the API hangs, the socket is cut with a `504 Gateway Timeout`, preventing suspended requests from wasting the Node.js event loop.
-*   **Safe UI Injection & UX:** To minimize prompt injection attacks trying to force client-side XSS, the frontend binds the AI response using `.textContent` rather than `.innerHTML`. A 900ms delay is added before rendering to mimic human response delay.
+*   **Verifying the Messenger (Frontend Bouncer):** Turnstile widgets evaluate a user’s browser environment, mouse movements, and IP behavior. If a bot is detected, it fails at the browser level—no API call is made to the backend, saving server resources. If a human is verified, the widget issues a one-time-use cryptographic token (⁠`cf_token`⁠).
+*   **Backend Zero-Trust Check:** The frontend sends the ⁠`cf_token⁠` and the chat message to the Node.js `/api/ai/chat⁠` endpoint. Because automated scripts (like Postman or Python) can bypass the frontend to send forged requests, the server does not blindly trust the token. It makes a direct call to Cloudflare's ⁠`/siteverify⁠` API. If forged, the backend drops the request (⁠403 Forbidden⁠). If valid, it proceeds to the inner sanctum.
+*   **Decontamination (DIY WAF):** Cloudflare verifies the user is human, but humans can still be malicious. If a user types a JavaScript payload into the chat, the Node.js server intercepts it and passes it through a custom ⁠`xss()⁠` function. This scrubs every nested string, ensuring that when the message is logged to Firestore, it doesn’t trigger a Stored XSS attack on the client's dashboard.
+*   **Context Assembly:** OpenAI starts with a blank slate and knows nothing about the specific SaaS clients. The backend queries Firestore for the specific business ID, pulls that business's hours, services, and custom instructions (e.g., "Do not offer discounts"), and injects them directly into the System Prompt.
+*   **Token Optimization (Memory Condensation):** Without optimization, an entire chat thread gets sent to OpenAI on every call, burning through the API budget as the conversation grows. The system monitors message count; if a thread exceeds 6 messages, a background call to ⁠`gpt-4o⁠` condenses the history into a 150-token active summary, replacing the bulky history and preventing AI hallucinations.
+*   **Guarded Fetch:** The server makes the HTTP request to OpenAI to generate a reply, but the fetch is wrapped in an ⁠`AbortController⁠`. If OpenAI's servers hang and don't respond within 20 seconds, the server forcefully severs the connection (⁠504 Gateway Timeout⁠). This prevents the Render server threads from crashing due to resource exhaustion.
+*   **Teturn Trip & Safe Render:** The frontend takes over once the AI response makes it back down the pipeline. Because hallucinated AI code could break the site, the frontend binds the response as strict text (⁠`.textContent`⁠), neutralizing all scripts. Finally, an artificial 900ms delay is injected before rendering to mimic natural human typing latency.
 
 ---
 
